@@ -213,6 +213,7 @@ def ds_nerf_depth_loss(
     steps: TensorType[..., "num_samples", 1],
     lengths: TensorType[..., "num_samples", 1],
     sigma: TensorType[0],
+    mask: TensorType[...]
 ) -> TensorType[..., 1]:
     """Depth loss from Depth-supervised NeRF (Deng et al., 2022).
 
@@ -222,10 +223,11 @@ def ds_nerf_depth_loss(
         steps: Sampling distances along rays.
         lengths: Distances between steps.
         sigma: Uncertainty around depth values.
+        mask: Mask array to mask out regions where GT depths == 0
     Returns:
         Depth loss scalar.
     """
-    loss = -torch.log(weights + EPS) * torch.exp(-((steps - termination_depth[:, None]) ** 2) / (2 * sigma)) * lengths
+    loss = -torch.log(weights + EPS) * torch.exp(-(((steps - termination_depth[:, None]) * mask) ** 2) / (2 * sigma)) * lengths
     return torch.mean(loss.sum(-2))
 
 
@@ -235,6 +237,7 @@ def urban_radiance_field_depth_loss(
     predicted_depth: TensorType[..., 1],
     steps: TensorType[..., "num_samples", 1],
     sigma: TensorType[0],
+    mask: TensorType[...]
 ) -> TensorType[..., 1]:
     """Lidar losses from Urban Radiance Fields (Rematas et al., 2022).
 
@@ -244,11 +247,12 @@ def urban_radiance_field_depth_loss(
         predicted_depth: Depth prediction from the network.
         steps: Sampling distances along rays.
         sigma: Uncertainty around depth values.
+        mask: Mask array to mask out regions where GT depths == 0
     Returns:
         Depth loss scalar.
     """
     # Expected depth loss
-    expected_depth_loss = (termination_depth - predicted_depth) ** 2
+    expected_depth_loss = ((termination_depth - predicted_depth) * mask) ** 2
 
     # Line of sight losses
     target_distribution = torch.distributions.normal.Normal(0.0, sigma / URF_SIGMA_SCALE_FACTOR)
@@ -274,6 +278,7 @@ def depth_loss(
     directions_norm: TensorType[..., 1],
     is_euclidean: bool,
     depth_loss_type: DephtLossType,
+    mask: TensorType[...]
 ) -> TensorType[0]:
     """Implementation of depth losses.
 
@@ -296,9 +301,9 @@ def depth_loss(
 
     if depth_loss_type == DephtLossType.DS_NERF:
         lengths = ray_samples.frustums.ends - ray_samples.frustums.starts
-        return ds_nerf_depth_loss(weights, termination_depth, steps, lengths, sigma)
+        return ds_nerf_depth_loss(weights, termination_depth, steps, lengths, sigma, mask)
 
     if depth_loss_type == DephtLossType.URF:
-        return urban_radiance_field_depth_loss(weights, termination_depth, predicted_depth, steps, sigma)
+        return urban_radiance_field_depth_loss(weights, termination_depth, predicted_depth, steps, sigma, mask)
 
     raise NotImplementedError("Provided depth loss type not implemented.")
