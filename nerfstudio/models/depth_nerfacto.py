@@ -114,8 +114,8 @@ class DepthNerfactoModel(NerfactoModel):
         predicted_depth_colormap = colormaps.apply_depth_colormap(
             outputs["depth"],
             accumulation=outputs["accumulation"],
-            near_plane=torch.min(ground_truth_depth),
-            far_plane=torch.max(ground_truth_depth),
+            near_plane=0.0,
+            far_plane=5.0,
         )
         images["depth"] = torch.cat([ground_truth_depth_colormap, predicted_depth_colormap], dim=1)
         depth_mask = ground_truth_depth > 0

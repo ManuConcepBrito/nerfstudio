@@ -319,6 +319,8 @@ class NerfactoModel(Model):
         depth = colormaps.apply_depth_colormap(
             outputs["depth"],
             accumulation=outputs["accumulation"],
+            near_plane=0.0,
+            far_plane=5.0,
         )
 
         combined_rgb = torch.cat([image, rgb], dim=1)
