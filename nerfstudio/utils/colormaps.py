@@ -62,14 +62,13 @@ def apply_depth_colormap(
         cmap: Colormap to apply.
 
     Returns:
-        Colored depth image with colors in [0, 1]
+        Colored depth image with colors in [near_plane, far_plane]
     """
 
     near_plane = near_plane or float(torch.min(depth))
     far_plane = far_plane or float(torch.max(depth))
 
     depth = (depth - near_plane) / (far_plane - near_plane + 1e-10)
-    depth = torch.clip(depth, 0, 1)
     # depth = torch.nan_to_num(depth, nan=0.0) # TODO(ethan): remove this
 
     colored_image = apply_colormap(depth, cmap=cmap)

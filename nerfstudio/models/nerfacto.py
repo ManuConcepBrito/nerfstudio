@@ -344,6 +344,8 @@ class NerfactoModel(Model):
         depth = colormaps.apply_depth_colormap(
             outputs["depth"],
             accumulation=outputs["accumulation"],
+            near_plane=self.config.collider_params["near_plane"],
+            far_plane=self.config.collider_params["far_plane"],
         )
 
         combined_rgb = torch.cat([image, rgb], dim=1)
