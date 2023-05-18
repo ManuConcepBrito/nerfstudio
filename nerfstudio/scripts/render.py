@@ -476,6 +476,7 @@ Commands = tyro.conf.FlagConversionOff[
     Union[
         Annotated[RenderCameraPath, tyro.conf.subcommand(name="camera-path")],
         Annotated[RenderInterpolated, tyro.conf.subcommand(name="interpolate")],
+        Annotated[RenderEvalImages, tyro.conf.subcommand(name="eval")],
         Annotated[SpiralRender, tyro.conf.subcommand(name="spiral")],
     ]
 ]
