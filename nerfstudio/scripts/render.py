@@ -393,6 +393,44 @@ class RenderInterpolated(BaseRender):
 
 
 @dataclass
+class RenderEvalImages(BaseRender):
+    """Render eval dataset images."""
+
+    rendered_output_names: List[str] = field(default_factory=lambda: ["rgb"])
+    """Name of the renderer outputs to use. rgb, depth, etc. concatenates them along y axis"""
+    pose_source: Literal["eval", "train"] = "eval"
+    """Pose source to render."""
+    order_poses: bool = False
+    """Whether to order camera poses by proximity."""
+    output_format: Literal["images", "video"] = "video"
+    """How to save output data."""
+
+    def main(self) -> None:
+        """Main function."""
+        _, pipeline, _, _ = eval_setup(
+            self.load_config,
+            eval_num_rays_per_chunk=self.eval_num_rays_per_chunk,
+            test_mode="test",
+        )
+
+        install_checks.check_ffmpeg_installed()
+
+        assert pipeline.datamanager.eval_dataset is not None
+        cameras = pipeline.datamanager.eval_dataset.cameras
+
+        _render_trajectory_video(
+            pipeline,
+            cameras,
+            output_filename=self.output_path,
+            rendered_output_names=self.rendered_output_names,
+            rendered_resolution_scaling_factor=1.0 / self.downscale_factor,
+            seconds=seconds,
+            output_format="images",
+            colormap_options=self.colormap_options,
+        )
+
+
+@dataclass
 class SpiralRender(BaseRender):
     """Render a spiral trajectory (often not great)."""
 
